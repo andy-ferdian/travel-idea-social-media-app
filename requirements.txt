@@ -1,6 +1,6 @@
 asgiref==3.2.10
 boto3==1.14.23
-botocore==1.17.23
+botocore
 certifi==2020.6.20
 chardet==3.0.4
 coreapi==2.3.3
