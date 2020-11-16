@@ -110,7 +110,7 @@ class HowToGetThere(models.Model):
 
 
 class RestaurantImageFile(models.Model):
-    restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
+    restaurant = models.ForeignKey(Restaurant, related_name='restaurant_images', on_delete=models.CASCADE)
     file = models.FileField(upload_to='restaurant_images/', help_text='Restaurant image.', null=True, blank=True)
 
     class Meta:
@@ -124,7 +124,7 @@ class RestaurantImageFile(models.Model):
 
 
 class RestaurantMenuFile(models.Model):
-    restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
+    restaurant = models.ForeignKey(Restaurant, related_name='restaurant_menus', on_delete=models.CASCADE)
     file = models.FileField(upload_to='restaurant_menu/', help_text='Restaurant Menu.', null=True, blank=True)
 
     class Meta:
