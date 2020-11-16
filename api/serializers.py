@@ -1,6 +1,7 @@
 import pdb
 from django.db.models import fields
 from rest_framework import serializers
+from rest_framework.validators import UniqueValidator, UniqueTogetherValidator, ValidationError
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from pdb import set_trace
@@ -8,6 +9,8 @@ from .models import *
 
 
 class CategorySerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(required=False)
+    name = serializers.CharField(required=False)
 
     class Meta:
         model = Category
@@ -22,52 +25,69 @@ class LocationSerializer(serializers.ModelSerializer):
 
 
 class RestaurantImageSerializer(serializers.ModelSerializer):
+    restaurant = serializers.PrimaryKeyRelatedField(queryset=Restaurant.objects.all(), many=False, required=False)
 
     class Meta:
         model = RestaurantImageFile
-        fields = ('id', 'restaurant', 'file',)
+        fields = ('id', 'restaurant', 'img_file',)
 
 
 class RestaurantMenuSerializer(serializers.ModelSerializer):
+    restaurant = serializers.PrimaryKeyRelatedField(queryset=Restaurant.objects.all(), many=False, required=False)
 
     class Meta:
         model = RestaurantMenuFile
-        fields = ('id', 'restaurant', 'file',)
+        fields = ('id', 'restaurant', 'menu_file',)
 
 
 class RestaurantSerializer(serializers.ModelSerializer):
     location = LocationSerializer(many=False)
     category = CategorySerializer(many=False)
-    restaurant_images = RestaurantImageSerializer(many=True, required=False)
-    restaurant_menus = RestaurantMenuSerializer(many=True, required=False)
+    restaurant_images = RestaurantImageSerializer(source='restaurantimagefile_set', many=True, required=False)
+    restaurant_menus = RestaurantMenuSerializer(source='restaurantmenufile_set', many=True, required=False)
 
     class Meta:
         model = Restaurant
         fields = ('id', 'name', 'category', 'location', 'restaurant_images',  'restaurant_menus',)
 
 
-    # def create(self, validated_data):
-    #     location_data = validated_data.pop('location', None)
-    #     images_data = validated_data.pop('restaurant_images', None)
-    #     menus_data = validated_data.pop('restaurant_menus', None)
+    def create(self, validated_data):
+        location_data = validated_data.pop('location', None)
+        category_data = validated_data.pop('category', None)
+        images_data = validated_data.pop('restaurantimagefile_set', None)
+        menus_data = validated_data.pop('restaurantmenufile_set', None)
 
         
-    #     if location_data:
-    #         location = Location.objects.create(**location_data)
-    #     else:
-    #         location = None
-        
-    #     restaurant = Restaurant.objects.create(location=location, **validated_data)
+        if location_data:
+            location = Location.objects.create(**location_data)
+        else:
+            location = None
 
-    #     if images_data:
-    #         for image in images_data:
-    #             RestaurantImageFile.objects.create(restaurant=restaurant, **image)
+        restaurant = Restaurant.objects.create(location=location, **validated_data)
 
-    #     if menus_data:
-    #         for menu in menus_data:
-    #             RestaurantMenuFile.objects.create(restaurant=restaurant, **menu)
+        if category_data:
+            category_id = category_data.get('id', None)
+            if category_id:
+                try:
+                    category = Category.objects.get(id=category_id)
+                    restaurant.category = category
+                    restaurant.save()
+                except Category.DoesNotExist:
+                    raise ValidationError('Category %s does not exist.' % category_id)
+            else:
+                category = Category.objects.create(name=category_data['name'])
+                restaurant.category = category
+                restaurant.save()
 
-    #     return restaurant
+        if images_data:
+            for image in images_data:
+                RestaurantImageFile.objects.create(restaurant=restaurant, **image)
+
+        if menus_data:
+            for menu in menus_data:
+                RestaurantMenuFile.objects.create(restaurant=restaurant, **menu)
+
+        return restaurant
 
 
 

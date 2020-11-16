@@ -17,8 +17,8 @@ class Category(models.Model):
 
 class Location(models.Model):
     name = models.CharField(max_length=255, help_text='Name of the location.')
-    longitude = models.FloatField(default=0)
-    latitude = models.FloatField(default=0)
+    longitude = models.FloatField(default=0, null=True)
+    latitude = models.FloatField(default=0, null=True)
 
     class Meta:
         ordering = ['id']
@@ -110,8 +110,8 @@ class HowToGetThere(models.Model):
 
 
 class RestaurantImageFile(models.Model):
-    restaurant = models.ForeignKey(Restaurant, related_name='restaurant_images', on_delete=models.CASCADE)
-    file = models.FileField(upload_to='restaurant_images/', help_text='Restaurant image.', null=True, blank=True)
+    restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
+    img_file = models.FileField(upload_to='restaurant_images/', help_text='Restaurant image.', null=True, blank=True)
 
     class Meta:
         ordering = ['id']
@@ -124,8 +124,8 @@ class RestaurantImageFile(models.Model):
 
 
 class RestaurantMenuFile(models.Model):
-    restaurant = models.ForeignKey(Restaurant, related_name='restaurant_menus', on_delete=models.CASCADE)
-    file = models.FileField(upload_to='restaurant_menu/', help_text='Restaurant Menu.', null=True, blank=True)
+    restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
+    menu_file = models.FileField(upload_to='restaurant_menu/', help_text='Restaurant Menu.', null=True, blank=True)
 
     class Meta:
         ordering = ['id']
